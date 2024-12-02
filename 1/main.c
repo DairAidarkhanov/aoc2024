@@ -43,27 +43,19 @@ index_lines(Mapped_File *file, const Allocator *allocator)
 	assert(allocator->alloc != NULL);
 	assert(allocator->free != NULL);
 
-	size_t capacity = 16;
-	file->lines = allocator->alloc(capacity * sizeof(char *));
+	size_t newline_count = 0;
+	for (size_t i = 0; i < file->size; ++i) {
+		if (file->content[i] == '\n') {
+			++newline_count;
+		}
+	}
+
+	file->lines = allocator->alloc((newline_count + 1) * sizeof(char *));
 	if (!file->lines) return -1;
 
 	file->lines[file->line_count++] = file->content;
-
 	for (size_t i = 0; i < file->size; ++i) {
 		if (file->content[i] == '\n' && i + 1 < file->size) {
-			if (file->line_count >= capacity) {
-				size_t new_capacity = capacity * 2;
-
-				if (new_capacity < capacity) return -1;
-
-				char **new_lines = allocator->alloc(new_capacity * sizeof(char *));
-				if (!new_lines) return -1;
-
-				memcpy(new_lines, file->lines, file->line_count * sizeof(char *));
-				allocator->free(file->lines);
-				file->lines = new_lines;
-				capacity = new_capacity;
-			}
 			file->lines[file->line_count++] = &file->content[i + 1];
 		}
 	}
